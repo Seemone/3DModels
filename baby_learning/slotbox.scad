@@ -1,10 +1,17 @@
 // A square box, with a lid with a slot in it
-// round, triangular and square tokens to push thru
+// round, triangular, square and star shaped tokens to push thru
+// a tray holder to put multiple together
 // tolerances are set to a default that offers some resistance
 // requires https://github.com/BelfrySCAD/BOSL2
 
 include <BOSL2/std.scad>
 include <BOSL2/rounding.scad>
+
+/* [Shape] */
+
+tokenshape = "round"; // ["round","triangle","square","star"]
+
+/* [Sizes] */
 
 side = 40;
 height = 30;
@@ -14,25 +21,23 @@ slotwidth=4;
 lidheight=10;
 outline_width=5;
 
+/* [Options] */
+
 box_color = "blue";
-lid_color = "red";
-
-tokenshape = "round";
-
+token_color = "red";
 slotted = true;
+lid_tolerance=0.15;
+slot_tolerance=0.1;
+
+/* [Components] */
 
 hide_box = false;
 hide_lid = false;
 hide_holder = false;
-holder_rows = 3;
+holder_rows = 2;
 holder_columns = 2;
 
-hide_roundtoken = false;
-hide_triangletoken = false;
-hide_squaretoken = false;
 
-lid_tolerance=0.15;
-slot_tolerance=0.1;
 
 module roundtoken(x,y,z,diameter,thickness,anchor=BOTTOM)
 {
@@ -58,7 +63,6 @@ module roundtoken_lid(x,y,z,diameter,thickness,anchor=BOTTOM)
 
 }
 
-
 module squaretoken(x,y,z,side,thickness,anchor=BOTTOM)
 {
    torus_radius = thickness/2;
@@ -67,7 +71,6 @@ module squaretoken(x,y,z,side,thickness,anchor=BOTTOM)
    translate([x,y,z])
       cuboid([side, side, thickness], anchor=anchor, rounding=torus_radius);
 }
-
 
 module triangletoken(x,y,z,side,thickness,anchor=BOTTOM)
 {
@@ -83,7 +86,6 @@ module triangletoken(x,y,z,side,thickness,anchor=BOTTOM)
          h=thickness,anchor=anchor); 
 }
 
-
 module triangletoken_lid(x,y,z,side,thickness,anchor=BOTTOM)
 {
    torus_radius = thickness/2;
@@ -94,6 +96,29 @@ module triangletoken_lid(x,y,z,side,thickness,anchor=BOTTOM)
          rounded_prism(regular_ngon(n=3, side=side),h=thickness,anchor=anchor, k=0); 
 }
 
+module startoken(x,y,z,side,thickness,anchor=BOTTOM)
+{
+   torus_radius = thickness/2;
+   inner_radius = side/2-torus_radius;
+   
+   translate([x,y,z])
+      rotate([0,0,270])
+         rounded_prism(star(n=5,r=side/2,ir=side/4),
+         joint_top=torus_radius,
+         joint_bot=torus_radius,
+         joint_sides=torus_radius,
+         h=thickness,anchor=anchor); 
+}
+
+module startoken_lid(x,y,z,side,thickness,anchor=BOTTOM)
+{
+   torus_radius = thickness/2;
+   inner_radius = side/2-torus_radius;
+   
+   translate([x,y,z])
+      rotate([0,0,270])
+         rounded_prism(star(n=5,r=side/2,ir=side/4),h=thickness,anchor=anchor, k=0); 
+}
 
 module boxbase(x,y,z,side,height,thickness,slotlength=0,slotwidth=0)
 {
@@ -137,11 +162,10 @@ module boxoutline(x,y,z,side,thickness,slotlength=0,slotwidth=0,outline_width=0)
    torus_radius = thickness/2;
    inner_radius = side/2-torus_radius;
 
-   color(lid_color)       
+   color(token_color)       
       translate([x,y,z])
          cuboid([slotlength+outline_width,slotwidth+outline_width,thickness], anchor=BOTTOM);
 }
-
 
 $fn=100;
 
@@ -150,12 +174,13 @@ pos_y=0;
 pos_z=0;
 
 if(tokenshape=="triangle")
-      color(lid_color) triangletoken(pos_x,pos_y, pos_z, slotlength, slotwidth);
+      color(token_color) triangletoken(pos_x,pos_y, pos_z, slotlength, slotwidth);
 else if(tokenshape=="square")
-      color(lid_color) squaretoken(pos_x,pos_y, pos_z, slotlength, slotwidth);
+      color(token_color) squaretoken(pos_x,pos_y, pos_z, slotlength, slotwidth);
 else if(tokenshape=="round")
-      color(lid_color) roundtoken(pos_x,pos_y, pos_z, slotlength, slotwidth);   
-
+      color(token_color) roundtoken(pos_x,pos_y, pos_z, slotlength, slotwidth);   
+else if(tokenshape=="star")
+      color(token_color) startoken(pos_x,pos_y, pos_z, slotlength, slotwidth);
 if(!hide_box)
    color(box_color) boxbase(pos_x+side+10,pos_y, pos_z,side,height,wall_thickness,slotlength,slotwidth);
 
@@ -168,11 +193,13 @@ if(!hide_lid)
             color(box_color) boxlid(0,0, 0,side,wall_thickness,slotlength,slotwidth,lidheight,lid_tolerance);
             boxslot(0,-pos_y+10, pos_z,side,wall_thickness,slotlength+outline_w,slotwidth+outline_w);
          if(tokenshape=="triangle")
-            color(lid_color) triangletoken(0,-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
+            color(token_color) triangletoken(0,-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
          else if(tokenshape=="square")
-            color(lid_color) squaretoken(0,0-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
+            color(token_color) squaretoken(0,0-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
          else if(tokenshape=="round")
-            color(lid_color) roundtoken(0,0-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
+            color(token_color) roundtoken(0,0-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
+         else if(tokenshape=="star")
+            color(token_color) startoken(0,0-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
          }
       } else {
          color(box_color) boxlid(-pos_x,-pos_y, pos_z,side,wall_thickness,slotlength,slotwidth,lidheight);
@@ -192,12 +219,14 @@ if(!hide_lid)
    translate([pos_x+(side+10)*2,pos_y,pos_z])
       if(slotted){
          if(tokenshape=="triangle")
-            color(lid_color) triangletoken(0,-side/4+5, 0, slotlength/3*2, wall_thickness,anchor=BOTTOM);
+            color(token_color) triangletoken(0,-side/4+5, 0, slotlength/3*2, wall_thickness,anchor=BOTTOM);
          else if(tokenshape=="square")
-            color(lid_color) squaretoken(0,-side/4+5, 0, slotlength/3*2, wall_thickness,anchor=BOTTOM);
+            color(token_color) squaretoken(0,-side/4+5, 0, slotlength/3*2, wall_thickness,anchor=BOTTOM);
          else if(tokenshape=="round")
-            color(lid_color) roundtoken_lid(0,-side/4+5, 0, slotlength/3, wall_thickness,anchor=BOTTOM);
-      }
+            color(token_color) roundtoken_lid(0,-side/4+5, 0, slotlength/3, wall_thickness,anchor=BOTTOM);
+         else if(tokenshape=="star")
+            color(token_color) startoken_lid(0,-side/4+5, 0, slotlength/3*2, wall_thickness,anchor=BOTTOM);
+         }
 
 
 if(!hide_holder)
