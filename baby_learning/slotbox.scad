@@ -36,7 +36,8 @@ hide_lid = false;
 hide_holder = false;
 holder_rows = 2;
 holder_columns = 2;
-
+shape_rows = 2;
+shape_columns = 2;
 
 
 module roundtoken(x,y,z,diameter,thickness,anchor=BOTTOM)
@@ -173,19 +174,23 @@ pos_x=0;
 pos_y=0;
 pos_z=0;
 
-if(tokenshape=="triangle")
-      color(token_color) triangletoken(pos_x,pos_y, pos_z, slotlength, slotwidth);
-else if(tokenshape=="square")
-      color(token_color) squaretoken(pos_x,pos_y, pos_z, slotlength, slotwidth);
-else if(tokenshape=="round")
-      color(token_color) roundtoken(pos_x,pos_y, pos_z, slotlength, slotwidth);   
-else if(tokenshape=="star")
-      color(token_color) startoken(pos_x,pos_y, pos_z, slotlength, slotwidth);
+for(r = [1:shape_rows])
+   for(c = [1:shape_columns])
+      translate([(side+wall_thickness*2+lid_tolerance*2)*(r-1), -(side+wall_thickness*2+lid_tolerance*2)*(c), 0])
+         if(tokenshape=="triangle")
+            color(token_color) triangletoken(pos_x,pos_y, pos_z, slotlength, slotwidth);
+         else if(tokenshape=="square")
+            color(token_color) squaretoken(pos_x,pos_y, pos_z, slotlength, slotwidth);
+         else if(tokenshape=="round")
+            color(token_color) roundtoken(pos_x,pos_y, pos_z, slotlength, slotwidth);   
+         else if(tokenshape=="star")
+            color(token_color) startoken(pos_x,pos_y, pos_z, slotlength, slotwidth);
+
 if(!hide_box)
-   color(box_color) boxbase(pos_x+side+10,pos_y, pos_z,side,height,wall_thickness,slotlength,slotwidth);
+   color(box_color) boxbase(pos_x,pos_y, pos_z,side,height,wall_thickness,slotlength,slotwidth);
 
 if(!hide_lid)
-   translate([pos_x+(side+10)*2,pos_y,pos_z])
+   translate([pos_x+(side+10),pos_y,pos_z])
       if(slotted){
          biggest_slot_measure=max(slotlength,slotwidth);
          outline_w = side-5 < biggest_slot_measure+outline_width ? side-biggest_slot_measure-5 : outline_width;
@@ -206,7 +211,7 @@ if(!hide_lid)
       }
 
 if(!hide_lid)
-   translate([pos_x+(side+10)*2,pos_y,pos_z])
+   translate([pos_x+(side+10),pos_y,pos_z])
       if(slotted){
          biggest_slot_measure=max(slotlength,slotwidth);
          outline_w = side-5 < biggest_slot_measure+outline_width ? side-biggest_slot_measure-5 : outline_width;
@@ -216,7 +221,7 @@ if(!hide_lid)
          }
       }
 if(!hide_lid)
-   translate([pos_x+(side+10)*2,pos_y,pos_z])
+   translate([pos_x+(side+10),pos_y,pos_z])
       if(slotted){
          if(tokenshape=="triangle")
             color(token_color) triangletoken(0,-side/4+5, 0, slotlength/3*2, wall_thickness,anchor=BOTTOM);
