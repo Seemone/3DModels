@@ -11,6 +11,13 @@ height = 30;
 wall_thickness = 1;
 slotlength=26;
 slotwidth=4;
+lidheight=10;
+outline_width=5;
+
+box_color = "blue";
+lid_color = "red";
+
+slotted = true;
 
 hide_box = false;
 hide_lid = false;
@@ -97,22 +104,16 @@ module boxslot(x,y,z,radius,thickness,slotlength=0,slotwidth=0)
       cuboid([slotlength+slot_tolerance, slotwidth+slot_tolerance, thickness*3], anchor=CENTER, rounding=0);
 }
 
-module box(x,y,z,radius,height,thickness,slotlength=0,slotwidth=0,lidheight)
+module boxoutline(x,y,z,radius,thickness,slotlength=0,slotwidth=0,outline_width=0)
 {
-   if(!hide_box)
-      boxbase(x,y,z,radius,height,thickness,slotlength,slotwidth);
-   
-   if(!hide_lid)
-      if((slotwidth>0) && (slotlength>0)){
-         difference() {
-               boxlid(x,y,z,radius,thickness,slotlength,slotwidth,lidheight);
-               boxslot(x,y,z,radius,thickness,slotlength,slotwidth);
-         }
+   torus_radius = thickness/2;
+   inner_radius = radius-torus_radius;
 
-      } else {
-         boxlid(x,y,z,radius,thickness,slotlength,slotwidth);
-      }
+   color(lid_color)       
+      translate([x+radius*2+10,y,z])
+         cuboid([slotlength+outline_width,slotwidth+outline_width,thickness], anchor=BOTTOM);
 }
+
 
 $fn=100;
 
@@ -120,13 +121,31 @@ pos_x=20;
 pos_y=20;
 pos_z=0;
 
-if(!hide_triangletoken)
-   triangletoken(pos_x,pos_y, pos_z, slotlength/2, slotwidth);
+if(slotted)
+   if(!hide_triangletoken)
+      color(lid_color) triangletoken(pos_x,pos_y, pos_z, slotlength/2, slotwidth);
 
-if(!hide_squaretoken)
-   squaretoken(-pos_x,pos_y, pos_z, slotlength/2, slotwidth);
+if(slotted)
+   if(!hide_squaretoken)
+      color(lid_color) squaretoken(-pos_x,pos_y, pos_z, slotlength/2, slotwidth);
+   
+if(slotted)
+   if(!hide_roundtoken)
+      color(lid_color) token(pos_x*3,pos_y, pos_z, slotlength/2, slotwidth);
+   
+if(!hide_box)
+   color(box_color) boxbase(-pos_x,-pos_y, pos_z,radius,height,wall_thickness,slotlength,slotwidth);
 
-if(!hide_roundtoken)
-   token(pos_x*3,pos_y, pos_z, slotlength/2, slotwidth);
-
-box(-pos_x,-pos_y, pos_z, radius, height, wall_thickness, slotlength, slotwidth, lidheight=10);
+if(!hide_lid)
+   if(slotted){
+      difference() {
+         color(box_color) boxlid(-pos_x,-pos_y, pos_z,radius,wall_thickness,slotlength,slotwidth,lidheight);
+         boxslot(-pos_x,-pos_y, pos_z,radius,wall_thickness,slotlength+outline_width,slotwidth+outline_width);
+      }
+      difference() {
+         boxoutline(-pos_x,-pos_y, pos_z,radius,wall_thickness,slotlength,slotwidth,outline_width);
+         boxslot(-pos_x,-pos_y, pos_z,radius,wall_thickness,slotlength,slotwidth);
+      }
+   } else {
+      color(box_color) boxlid(-pos_x,-pos_y, pos_z,radius,wall_thickness,slotlength,slotwidth,lidheight);
+   }
