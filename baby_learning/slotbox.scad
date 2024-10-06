@@ -13,13 +13,13 @@ tokenshape = "round"; // ["round","triangle","square","star"]
 
 /* [Sizes] */
 
-side = 40;
-height = 30;
+side = 60;
+height = 45;
 wall_thickness = 1;
-slotlength=26;
-slotwidth=4;
+slotlength=40;
+slotwidth=4.10;
 lidheight=10;
-outline_width=5;
+outline_width=7;
 fingerwidth=20;
 
 /* [Options] */
