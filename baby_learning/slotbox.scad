@@ -14,21 +14,24 @@ tokenshape = "round"; // ["round","triangle","square","star"]
 /* [Sizes] */
 
 side = 60;
-height = 45;
+height = 60;
 wall_thickness = 1;
 slotlength=40;
 slotwidth=4.10;
 lidheight=10;
 outline_width=7;
 fingerwidth=20;
+fastener_thickness=0.5;
+fastener_diameter=12;
 
 /* [Options] */
 
 box_color = "blue";
-token_color = "red";
+token_color = "white";
 slotted = true;
 lid_tolerance=0.15;
 slot_tolerance=0.1;
+fastener_tolerance=0;
 
 /* [Components] */
 
@@ -39,7 +42,7 @@ hide_cover = false;
 holder_rows = 2;
 holder_columns = 2;
 shape_rows = 2;
-shape_columns = 2;
+shape_columns = 2; 
 
 
 module roundtoken(x,y,z,diameter,thickness,anchor=BOTTOM)
@@ -133,6 +136,7 @@ module boxbase(x,y,z,side,height,thickness,slotlength=0,slotwidth=0)
    translate([x,y,z+thickness])
       cuboid([side-thickness*2, side-thickness*2, height+thickness*2], anchor=BOTTOM, rounding=0);
    }
+
 }
 
 
@@ -155,43 +159,54 @@ module boxoutline(x,y,z,side,thickness,slotlength=0,slotwidth=0,outline_width=0)
          cuboid([slotlength+outline_width,slotwidth+outline_width,thickness], anchor=BOTTOM);
 }
 
-module boxlid(x,y,z,side,thickness,slotlength=0,slotwidth=0,lidheight=0, tolerance=-1)
+module boxlid(x,y,z,side,thickness,slotlength=0,slotwidth=0,lidheight=0, tolerance=-1, fastener_thickness=0, fastener_diameter=0, fastener_tolerance=0, proper_lid=true)
 {
    torus_radius = thickness/2;
    inner_radius = side/2-torus_radius;
+   actual_thickness = proper_lid ? 2 * thickness : thickness;
    
    lidh = lidheight>0 ? lidheight : max(5,(side/8));
    
    difference() {
-   translate([x,y,z])
-      cuboid([side+thickness*2+tolerance, side+thickness*2+tolerance, lidh], anchor=BOTTOM, rounding=1);
-   translate([x,y,z+thickness])
-      cuboid([side+tolerance, side+tolerance, lidh+thickness*2], anchor=BOTTOM, rounding=0);
+      difference() {
+         translate([x,y,z])
+            cuboid([side+actual_thickness*2+tolerance, side+actual_thickness*2+tolerance, lidh+fastener_thickness], anchor=BOTTOM, rounding=1);
+         translate([x,y,z+actual_thickness+fastener_thickness])
+            cuboid([side+tolerance, side+tolerance, lidh+actual_thickness*2], anchor=BOTTOM, rounding=0);
+      }
+      if(fastener_thickness > 0)
+         translate([x,y,z+actual_thickness])
+            cylinder(actual_thickness*2,d=fastener_diameter+fastener_tolerance);
    }
 }
 
 
-module cover(x,y,z,length,width,thickness,fingerwidth=0,height=0, tolerance=-1)
+module cover(x,y,z,length,width,thickness,fingerwidth=0,height=0, tolerance=-1, fastener_thickness=0)
 {
    torus_radius = thickness/2;
    inner_radius = side/2-torus_radius;
+   total_length = length+thickness*3+tolerance;
+   total_width =  width+thickness*3+tolerance;
+   total_height = height+fastener_thickness;
    
    difference() {
       difference() {
          translate([x,y,z])
-            cuboid([length+thickness*2+tolerance, width+thickness*2+tolerance, height], anchor=BOTTOM+LEFT+FRONT, rounding=1);
+            cuboid([total_length, total_width, total_height], anchor=BOTTOM+LEFT+FRONT, rounding=1);
          translate([x+thickness/2,y+thickness/2,z+thickness])
-            cuboid([length+thickness+tolerance, width+thickness+tolerance, height+thickness*2], anchor=BOTTOM+LEFT+FRONT, rounding=0);
+            cuboid([length+thickness*2+tolerance, width+thickness*2+tolerance, height+thickness*2+fastener_thickness], anchor=BOTTOM+LEFT+FRONT, rounding=0);
       }
       if(height>fingerwidth/2+1)
-         translate([length/2,y+width/2,z+height+fingerwidth/2])
+         //translate([length/2,y+width/2,z+height+fingerwidth/2+fastener_thickness])
+         translate([x+total_length/2,y+total_width/2,z+total_height+fingerwidth/2])
             rotate([0,90,0])
-               cyl(length+thickness*2+tolerance+10, d=fingerwidth,anchor=LEFT+CENTER);
+               cyl(length+thickness*6+tolerance+10, d=fingerwidth,anchor=LEFT+CENTER);
 
       if(height>fingerwidth/2+1)
-            translate([length/2,y+width/2,z+height+fingerwidth/2])
+         //translate([length/2,y+width/2,z+height+fingerwidth/2+fastener_thickness])
+         translate([x+total_length/2,y+total_width/2,z+total_height+fingerwidth/2])
             rotate([90,0,0])
-               cyl(length+thickness*2+tolerance+10, d=fingerwidth,anchor=BACK+CENTER);
+               cyl(length+thickness*6+tolerance+10, d=fingerwidth,anchor=BACK+CENTER);
 
 
    }
@@ -226,16 +241,20 @@ if(!hide_lid)
    translate([pos_x+(side+10),pos_y,pos_z])
       if(slotted){
          difference() {
-            color(box_color) boxlid(0,0, 0,side,wall_thickness,slotlength,slotwidth,lidheight,lid_tolerance);
-            boxslot(0,-pos_y+10, pos_z,side,wall_thickness,slotlength+outline_w,slotwidth+outline_w);
-         if(tokenshape=="triangle")
-            color(token_color) triangletoken(0,-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
-         else if(tokenshape=="square")
-            color(token_color) squaretoken(0,0-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
-         else if(tokenshape=="round")
-            color(token_color) roundtoken(0,0-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
-         else if(tokenshape=="star")
-            color(token_color) startoken(0,0-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
+            difference() {
+               color(box_color) boxlid(0,0, 0,side,wall_thickness,slotlength,slotwidth,lidheight,lid_tolerance);
+               boxslot(0,-pos_y+10, pos_z,side,wall_thickness,slotlength+outline_w,slotwidth+outline_w);
+            if(tokenshape=="triangle")
+               color(token_color) triangletoken(0,-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
+            else if(tokenshape=="square")
+               color(token_color) squaretoken(0,0-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
+            else if(tokenshape=="round")
+               color(token_color) roundtoken(0,0-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
+            else if(tokenshape=="star")
+               color(token_color) startoken(0,0-side/4+5, 0, slotlength/3*2, wall_thickness*2,anchor=CENTER);
+            }
+            boxslot(0,10, 0,side,wall_thickness*3,slotlength,slotwidth);
+
          }
       } else {
          color(box_color) boxlid(-pos_x,-pos_y, pos_z,side,wall_thickness,slotlength,slotwidth,lidheight);
@@ -265,19 +284,20 @@ if(!hide_lid)
 
 
 if(!hide_holder)
-   translate([pos_x,pos_y+10, pos_z])
+   translate([pos_x+1.5,pos_y+10, pos_z])
       for(r = [1:holder_rows])
          for(c = [1:holder_columns])
-            translate([(side+wall_thickness*2+lid_tolerance*2)*(r-1), (side+wall_thickness*2+lid_tolerance*2)*(c), 0])
-               color(box_color) boxlid(0,0,0,side,wall_thickness,0,0,5,tolerance=lid_tolerance*2);
+            translate([(side+wall_thickness*4+lid_tolerance*2)*(r-1), (side+wall_thickness*4+lid_tolerance*2)*(c), 0])
+               color(box_color) boxlid(0,0,0,side,wall_thickness,0,0,5,tolerance=lid_tolerance*2,fastener_thickness,fastener_diameter, proper_lid=true);
 
 if(!hide_cover)
    translate([pos_x,pos_y+10, pos_z])
       translate([-side/2-wall_thickness*2+lid_tolerance*2,side/2+wall_thickness-lid_tolerance*2, 0])
          color(token_color) cover(0,0,0,
-            length=holder_rows*(side+wall_thickness)+wall_thickness*2+lid_tolerance*2,
-            width=holder_columns*(side+wall_thickness)+wall_thickness*2+lid_tolerance*2,
-            thickness=wall_thickness,
-            height=height+wall_thickness*2,
+            length=holder_rows*(side+wall_thickness)+wall_thickness*2+lid_tolerance*3,
+            width=holder_columns*(side+wall_thickness)+wall_thickness*2+lid_tolerance*3,
+            thickness=wall_thickness*2,
+            height=height+wall_thickness*5+lid_tolerance*3,
             fingerwidth=fingerwidth,
-            tolerance=lid_tolerance*2);
+            tolerance=lid_tolerance*2, fastener_thickness);
+  
